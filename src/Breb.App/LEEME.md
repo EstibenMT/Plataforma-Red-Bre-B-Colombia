@@ -100,3 +100,59 @@ Ya está resuelto en `Platforms/Android/MainApplication.cs`:
 | `net10.0-maccatalyst` | No — necesita un Mac |
 
 En este curso se usa **Android**, porque el Evaluable 4 exige un teléfono real.
+
+---
+
+## Cómo correr la demo del Evaluable 3
+
+La app tiene tres pantallas: **Login (JWT) → Saldo → Transferencia**. Se ejecuta en un emulador Android con la API local.
+
+### Preparación (una sola vez)
+
+1. .NET SDK 10 con la carga de trabajo MAUI y un emulador Android (API 34/35 con Google APIs).
+2. Repositorio en una ruta corta (ver arriba) y compilar en **Debug** (el HTTP en claro solo se permite en Debug):
+
+   ```bash
+   dotnet build src/Breb.App/Breb.App.csproj -f net10.0-android
+   ```
+
+3. Pruebas de los ViewModels y servicios (no necesitan emulador):
+
+   ```bash
+   dotnet test src/Breb.App.Tests
+   ```
+
+### Cada vez que se haga la demo
+
+1. Infraestructura y API (en todas las interfaces, puerto 5080):
+
+   ```bash
+   docker start breb-postgres breb-rabbitmq
+   cd src/Breb.Cuentas
+   dotnet run --urls http://0.0.0.0:5080
+   ```
+
+   Las cuentas de prueba salen de `scripts/cuentas-base.sql` (cuenta base `11111111-1111-1111-1111-111111111111`).
+2. Arrancar el emulador y ejecutar la app (Visual Studio o `dotnet build -t:Run -f net10.0-android`).
+3. En Login, el campo **Servidor** trae `http://10.0.2.2:5080` en Android. Es editable (en un teléfono real se usa la IP del computador).
+
+### Guion
+
+| Paso | Qué hacer | Qué debe verse |
+|---|---|---|
+| 1 | Login con clave errada (`ana.operadora` / `mala`) | Banner "Usuario o contraseña incorrectos." |
+| 2 | Login `ana.operadora` / `Operadora-2026` | Pantalla Saldo con usuario y rol |
+| 3 | Comparar con Swagger `GET /cuentas/{id}/saldo` | Mismos valores de Disponible y Retenido |
+| 4 | Transferir 10 UVB | "Fondos retenidos. Esperando confirmación del banco destino" con contador. Copiar el identificador |
+| 5 | Confirmar el abono con el usuario `core-bancario` antes de 15 s (Swagger `POST /transferencias/{id}/confirmar-abono` o el script de demo de `scripts/`) | "Completada" y el saldo disponible baja 10 |
+| 6 | Transferir otra vez y no confirmar | A los ~15-20 s "Compensada" y el saldo vuelve |
+| 7 | Login `luis.consulta` / `Consulta-2026` | Saldo funciona; al transferir aparece "no tiene permiso" |
+| 8 | Detener la API y pulsar Actualizar | Banner "No se pudo contactar el servidor Bre-B…" con botón Reintentar |
+| 9 | Modo avión en el emulador | Banner "Sin conexión. Verifique la red del dispositivo." |
+| 10 | Monto mayor al saldo | Mensaje local, sin llamar a la API |
+
+### Notas
+
+- El resultado final (Completada/Compensada) lo informa `GET /transferencias/{id}` de la API. Si el servidor aún no lo tiene (404), la app muestra "Fondos retenidos" sin resultado y recarga el saldo a los 17 s; no inventa un desenlace.
+- El token JWT dura 15 minutos y se guarda solo en `SecureStorage`. Al vencer, la app vuelve a Login con un aviso.
+- La URL del servidor y la última cuenta se guardan en `Preferences` (no son secretos).

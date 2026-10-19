@@ -6,6 +6,7 @@ using Breb.Cuentas.Consumidores;
 using Breb.Cuentas.Contratos;
 using Breb.Cuentas.Sagas;
 using Breb.Cuentas.Seguridad;
+using Breb.Cuentas.Transferencias;
 using Breb.Cuentas.Observabilidad;
 using Serilog;
 using System.Diagnostics;
@@ -218,6 +219,19 @@ app.MapPost("/cuentas/{cuentaId:guid}/retener",
     async (Guid cuentaId, decimal montoUVB,
            CuentasDbContext db, IPublishEndpoint publishEndpoint) =>
     {
+        // Un monto inválido es culpa del cliente: 400, no el 500 que producía
+        // la excepción del dominio. Se valida antes de abrir la transacción.
+        // Las columnas son HasPrecision(18,2): 0.001 pasaría "> 0" y se guardaría
+        // como 0.00. Se rechaza todo lo que no cabe exacto en 2 decimales.
+        if (montoUVB <= 0 || decimal.Round(montoUVB, 2) <= 0)
+            return Results.Problem(title: "El monto debe ser positivo.",
+                                   detail: "El monto debe ser positivo.",
+                                   statusCode: StatusCodes.Status400BadRequest);
+        if (decimal.Round(montoUVB, 2) != montoUVB)
+            return Results.Problem(title: "El monto admite como máximo 2 decimales.",
+                                   detail: "El monto admite como máximo 2 decimales.",
+                                   statusCode: StatusCodes.Status400BadRequest);
+
         // ── Bloqueo pesimista sobre la fila de la cuenta (Semana 5) ─────────
         // Primero intentamos concurrencia OPTIMISTA (token xmin + reintento con
         // espera exponencial). Lo medimos y no alcanzó: con 30 transferencias
@@ -255,6 +269,15 @@ app.MapPost("/cuentas/{cuentaId:guid}/retener",
             .FirstOrDefaultAsync();
 
         if (cuenta is null) return Results.NotFound("Cuenta no existe.");
+
+        // Saldo insuficiente: 409, decidido BAJO el bloqueo FOR UPDATE (el saldo
+        // que se lee es el definitivo). Se sale sin commit: la transacción se
+        // revierte al descartarla y el bloqueo se suelta. Cuenta.Retener conserva
+        // el mismo invariante como segunda barrera.
+        if (montoUVB > cuenta.SaldoDisponible)
+            return Results.Problem(title: "Saldo insuficiente para retener.",
+                                   detail: "Saldo insuficiente para retener.",
+                                   statusCode: StatusCodes.Status409Conflict);
 
         var transferenciaId = Guid.NewGuid();
         Telemetria.EtiquetarTransferencia(transferenciaId);
@@ -338,6 +361,10 @@ app.MapGet("/cuentas/{cuentaId:guid}/saldo", async (Guid cuentaId, CuentasDbCont
         : Results.Ok(new { cuentaId, cuenta.SaldoDisponible, cuenta.SaldoRetenido });
 })
 .RequireAuthorization(Politicas.LecturaCuentas);
+
+// ── Seguimiento de una transferencia (Issue #28) ────────────────────────
+// GET /transferencias/{id}: solo lectura. Ver Transferencias/ConsultaTransferencias.cs
+app.MapConsultaTransferencias();
 
 app.Run();
 

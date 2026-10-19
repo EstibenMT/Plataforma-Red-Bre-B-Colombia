@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Breb.App.Views.SaldoPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Breb.App.ViewModels"
+    x:DataType="vm:SaldoViewModel"
+    Title="Mi cuenta">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,20,20,32" Spacing="16" MaximumWidthRequest="560">
+
+            <VerticalStackLayout Spacing="2">
+                <Label Text="{Binding Usuario, StringFormat='Hola, {0}'}" FontFamily="OpenSansSemibold" FontSize="22"
+                       TextColor="{AppThemeBinding Light={StaticResource Texto}, Dark={StaticResource TextoDark}}" />
+                <Label Text="{Binding Rol, StringFormat='Rol: {0}'}" Style="{StaticResource TextoAuxiliar}" />
+            </VerticalStackLayout>
+
+            <Border IsVisible="{Binding HayAvisoRol}" Padding="14" StrokeThickness="0" StrokeShape="RoundRectangle 12"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource InfoSuave}, Dark={StaticResource InfoSuaveDark}}">
+                <Label Text="{Binding AvisoRol}" FontSize="14"
+                       TextColor="{AppThemeBinding Light={StaticResource Texto}, Dark={StaticResource TextoDark}}" />
+            </Border>
+
+            <Border Style="{StaticResource Tarjeta}" Padding="24"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SuperficieDark}}">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="Saldo disponible" FontSize="14" TextColor="{StaticResource Secondary}" />
+                    <Label Text="{Binding DisponibleTexto}" FontFamily="OpenSansSemibold" FontSize="34"
+                           TextColor="{StaticResource White}" SemanticProperties.Description="Saldo disponible" />
+                    <BoxView HeightRequest="1" Color="#33FFFFFF" Margin="0,12" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Text="Retenido" FontSize="14" TextColor="{StaticResource Secondary}" VerticalOptions="Center" />
+                        <Label Grid.Column="1" Text="{Binding RetenidoTexto}" FontFamily="OpenSansSemibold" FontSize="16"
+                               TextColor="{StaticResource White}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+            <Label Text="{Binding ActualizadoTexto}" Style="{StaticResource TextoAuxiliar}" FontSize="12"
+                   HorizontalOptions="Center" />
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                               Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+
+            <Border IsVisible="{Binding HayError}" Padding="14" StrokeThickness="0" StrokeShape="RoundRectangle 12"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource PeligroSuave}, Dark={StaticResource PeligroSuaveDark}}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{Binding MensajeError}" FontSize="14"
+                           TextColor="{AppThemeBinding Light={StaticResource Peligro}, Dark={StaticResource White}}" />
+                    <Button Text="Reintentar" Command="{Binding ConsultarSaldoCommand}" Style="{StaticResource BotonSecundario}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Button Text="Transferir" Command="{Binding IrATransferenciaCommand}" IsVisible="{Binding PuedeTransferir}" AutomationId="BotonTransferir" />
+            <Button Text="Actualizar saldo" Command="{Binding ConsultarSaldoCommand}" Style="{StaticResource BotonSecundario}" />
+
+            <Border Style="{StaticResource Tarjeta}" Padding="16">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Cuenta de operación" Style="{StaticResource TextoAuxiliar}" FontSize="12" />
+                        <Label Text="{Binding CuentaCorta}" FontFamily="OpenSansSemibold" FontSize="15"
+                               TextColor="{AppThemeBinding Light={StaticResource Texto}, Dark={StaticResource TextoDark}}"
+                               SemanticProperties.Description="Cuenta de operación" />
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <Button Text="Cerrar sesión" Command="{Binding CerrarSesionCommand}" Style="{StaticResource BotonTexto}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

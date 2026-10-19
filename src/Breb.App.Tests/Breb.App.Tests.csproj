@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>Breb.App.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <!-- Se ENLAZAN los fuentes de la app que no usan MAUI. No se referencia Breb.App.csproj (solo tiene
+       targets de plataforma). Si alguien mete un tipo MAUI en estas carpetas, este proyecto deja de compilar. -->
+  <ItemGroup>
+    <Compile Include="..\Breb.App\Models\**\*.cs" Link="Fuente\Models\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\Breb.App\Services\Abstracciones\**\*.cs" Link="Fuente\Abstracciones\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\Breb.App\Services\Api\**\*.cs" Link="Fuente\Api\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\Breb.App\ViewModels\**\*.cs" Link="Fuente\ViewModels\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+</Project>

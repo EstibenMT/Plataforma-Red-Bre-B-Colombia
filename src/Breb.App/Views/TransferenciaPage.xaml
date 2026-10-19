@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Breb.App.Views.TransferenciaPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Breb.App.ViewModels"
+    x:DataType="vm:TransferenciaViewModel"
+    Title="Nueva transferencia">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,20,20,32" Spacing="16" MaximumWidthRequest="560">
+
+            <Border Style="{StaticResource Tarjeta}">
+                <VerticalStackLayout Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Text="Cuenta de origen" Style="{StaticResource Etiqueta}" />
+                        <Label Grid.Column="1" Text="{Binding CuentaCorta}" FontSize="13"
+                               Style="{StaticResource TextoAuxiliar}" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,*" Margin="0,6,0,0">
+                        <VerticalStackLayout>
+                            <Label Text="Disponible" Style="{StaticResource TextoAuxiliar}" />
+                            <Label Text="{Binding DisponibleTexto}" FontFamily="OpenSansSemibold" FontSize="18"
+                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1">
+                            <Label Text="Retenido" Style="{StaticResource TextoAuxiliar}" />
+                            <Label Text="{Binding RetenidoTexto}" FontFamily="OpenSansSemibold" FontSize="18"
+                                   TextColor="{AppThemeBinding Light={StaticResource Texto}, Dark={StaticResource TextoDark}}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <VerticalStackLayout Spacing="12" IsVisible="{Binding MostrarFormulario}">
+                <Label Text="Monto (UVB)" Style="{StaticResource Etiqueta}" />
+                <Border Style="{StaticResource CampoTexto}">
+                    <Entry Text="{Binding MontoTexto}" Placeholder="Ej.: 10 o 12,5" Keyboard="Numeric"
+                           AutomationId="CampoMonto" IsEnabled="{Binding NoOcupado}" />
+                </Border>
+                <Label Text="Los fondos se retienen y el banco destino debe confirmar en 15 s. Máximo 1.000 UVB."
+                       Style="{StaticResource TextoAuxiliar}" FontSize="12" />
+                <Button Text="Transferir" Command="{Binding TransferirCommand}" AutomationId="BotonEnviar" />
+            </VerticalStackLayout>
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                               Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+
+            <Border IsVisible="{Binding HayError}" Padding="14" StrokeThickness="0" StrokeShape="RoundRectangle 12"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource PeligroSuave}, Dark={StaticResource PeligroSuaveDark}}">
+                <Label Text="{Binding MensajeError}" FontSize="14"
+                       TextColor="{AppThemeBinding Light={StaticResource Peligro}, Dark={StaticResource White}}" />
+            </Border>
+
+            <Border IsVisible="{Binding MostrarResultado}" Padding="20" StrokeThickness="0" StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource InfoSuave}, Dark={StaticResource InfoSuaveDark}}">
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding EsCompletada}" Value="True">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ExitoSuave}, Dark={StaticResource ExitoSuaveDark}}" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Border" Binding="{Binding EsCompensada}" Value="True">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource AlertaSuave}, Dark={StaticResource AlertaSuaveDark}}" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Border" Binding="{Binding EsAdvertencia}" Value="True">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource AlertaSuave}, Dark={StaticResource AlertaSuaveDark}}" />
+                    </DataTrigger>
+                </Border.Triggers>
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="{Binding TituloResultado}" FontFamily="OpenSansSemibold" FontSize="20"
+                           TextColor="{AppThemeBinding Light={StaticResource Texto}, Dark={StaticResource TextoDark}}" />
+                    <Label Text="{Binding MensajeResultado}" FontSize="15"
+                           TextColor="{AppThemeBinding Light={StaticResource Texto}, Dark={StaticResource TextoDark}}" />
+                    <Label Text="{Binding EsperaTexto}" IsVisible="{Binding EsEnProceso}" Style="{StaticResource TextoAuxiliar}" />
+
+                    <BoxView HeightRequest="1" Color="{AppThemeBinding Light={StaticResource Borde}, Dark={StaticResource BordeDark}}" />
+
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Text="Monto" Style="{StaticResource TextoAuxiliar}" VerticalOptions="Center" />
+                        <Label Grid.Column="1" Text="{Binding MontoEnviadoTexto}" FontFamily="OpenSansSemibold" FontSize="16"
+                               TextColor="{AppThemeBinding Light={StaticResource Texto}, Dark={StaticResource TextoDark}}" />
+                    </Grid>
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="Referencia de la operación" Style="{StaticResource TextoAuxiliar}" />
+                        <Entry Text="{Binding TransferenciaIdTexto, Mode=OneWay}" IsReadOnly="True" FontSize="12"
+                               Margin="-4,0,0,0" BackgroundColor="Transparent"
+                               TextColor="{AppThemeBinding Light={StaticResource TextoSuave}, Dark={StaticResource TextoSuaveDark}}"
+                               SemanticProperties.Description="Referencia de la operación, seleccionable" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <Button Text="Nueva transferencia" Command="{Binding NuevaTransferenciaCommand}"
+                    IsVisible="{Binding MostrarResultado}" />
+            <Button Text="Volver al saldo" Command="{Binding VolverCommand}" Style="{StaticResource BotonSecundario}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

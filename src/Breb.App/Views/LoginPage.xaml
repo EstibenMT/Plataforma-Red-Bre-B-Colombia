@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Breb.App.Views.LoginPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Breb.App.ViewModels"
+    x:DataType="vm:LoginViewModel"
+    Shell.NavBarIsVisible="False"
+    Title="Bre-B">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24,56,24,32" Spacing="28" MaximumWidthRequest="480">
+
+            <VerticalStackLayout Spacing="6">
+                <Label Text="Bre-B" FontFamily="OpenSansSemibold" FontSize="36"
+                       TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                <Label Text="Transferencias inmediatas, seguras y verificables."
+                       Style="{StaticResource TextoAuxiliar}" FontSize="16" />
+            </VerticalStackLayout>
+
+            <Border Style="{StaticResource Tarjeta}">
+                <VerticalStackLayout Spacing="16">
+                    <Label Text="Iniciar sesión" FontFamily="OpenSansSemibold" FontSize="20"
+                           TextColor="{AppThemeBinding Light={StaticResource Texto}, Dark={StaticResource TextoDark}}" />
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Usuario" Style="{StaticResource Etiqueta}" />
+                        <Border Style="{StaticResource CampoTexto}">
+                            <Entry Text="{Binding Usuario}" Placeholder="Su usuario" ReturnType="Next"
+                                   AutomationId="CampoUsuario" IsEnabled="{Binding NoOcupado}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Contraseña" Style="{StaticResource Etiqueta}" />
+                        <Border Style="{StaticResource CampoTexto}">
+                            <Entry Text="{Binding Clave}" Placeholder="Su contraseña" IsPassword="True"
+                                   ReturnType="Done" ReturnCommand="{Binding IngresarCommand}"
+                                   AutomationId="CampoClave" IsEnabled="{Binding NoOcupado}" />
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <Border IsVisible="{Binding HayError}" Padding="14" StrokeThickness="0"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource PeligroSuave}, Dark={StaticResource PeligroSuaveDark}}"
+                            StrokeShape="RoundRectangle 12">
+                        <Label Text="{Binding MensajeError}" FontSize="14"
+                               TextColor="{AppThemeBinding Light={StaticResource Peligro}, Dark={StaticResource White}}"
+                               SemanticProperties.Description="Mensaje de error" />
+                    </Border>
+
+                    <Button Text="Ingresar" Command="{Binding IngresarCommand}" AutomationId="BotonIngresar" />
+                    <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                                       Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <VerticalStackLayout Spacing="12">
+                <Button Text="{Binding TextoConexion}" Command="{Binding AlternarConexionCommand}"
+                        Style="{StaticResource BotonTexto}" HorizontalOptions="Center" />
+
+                <Border IsVisible="{Binding MostrarConexion}" Style="{StaticResource Tarjeta}" Padding="16">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Dirección del servidor" Style="{StaticResource Etiqueta}" />
+                        <Border Style="{StaticResource CampoTexto}">
+                            <Entry Text="{Binding ServidorUrl}" Keyboard="Url" Placeholder="http://10.0.2.2:5080"
+                                   AutomationId="CampoServidor" IsEnabled="{Binding NoOcupado}" />
+                        </Border>
+                        <Label Text="Emulador Android: 10.0.2.2. Teléfono físico: la IP de su computador en la red WiFi."
+                               Style="{StaticResource TextoAuxiliar}" FontSize="12" />
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

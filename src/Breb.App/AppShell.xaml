@@ -3,12 +3,18 @@
     x:Class="Breb.App.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:Breb.App"
-    Title="Breb.App">
+    xmlns:views="clr-namespace:Breb.App.Views"
+    FlyoutBehavior="Disabled"
+    Title="Bre-B">
 
     <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+        Title="Ingreso"
+        ContentTemplate="{DataTemplate views:LoginPage}"
+        Route="login" />
+
+    <ShellContent
+        Title="Saldo"
+        ContentTemplate="{DataTemplate views:SaldoPage}"
+        Route="saldo" />
 
 </Shell>

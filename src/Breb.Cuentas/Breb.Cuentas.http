@@ -44,3 +44,23 @@ Authorization: Bearer {{consulta.response.body.token}}
 ### 8. Qué dice mi token
 GET {{api}}/quien-soy
 Authorization: Bearer {{operador.response.body.token}}
+
+### 9. Estado de una transferencia -> 200 (EnProceso, luego Compensada a los ~15 s o Completada si se confirma)
+GET {{api}}/transferencias/{{retencion.response.body.transferenciaId}}
+Authorization: Bearer {{consulta.response.body.token}}
+
+### 10. Transferencia inexistente -> 404 sin cuerpo
+GET {{api}}/transferencias/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{consulta.response.body.token}}
+
+### 11. Monto invalido -> 400
+POST {{api}}/cuentas/{{cuenta}}/retener?montoUVB=0
+Authorization: Bearer {{operador.response.body.token}}
+
+### 12. Saldo insuficiente -> 409
+POST {{api}}/cuentas/{{cuenta}}/retener?montoUVB=999999999999
+Authorization: Bearer {{operador.response.body.token}}
+
+### 13. Mas de 2 decimales -> 400
+POST {{api}}/cuentas/{{cuenta}}/retener?montoUVB=10.123
+Authorization: Bearer {{operador.response.body.token}}

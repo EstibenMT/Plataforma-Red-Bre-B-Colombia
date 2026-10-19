@@ -139,6 +139,18 @@ gh pr create \
 
 > **Para el E1:** la guía paso a paso de cada Issue que se puede sustentar está en [`docs/e1-guia-por-issue.md`](docs/e1-guia-por-issue.md).
 
+**⚡ Resumen rápido: ¿cómo levanto la API?** (la primera vez, en orden; el detalle de cada paso está debajo)
+
+```bash
+docker compose up -d                                   # 1. RabbitMQ + PostgreSQL (esperar "healthy")
+cd src/Breb.Cuentas && dotnet build && dotnet ef database update   # 2. compilar y crear tablas
+cd ../..                                               #    volver a la raíz
+docker exec -i breb-postgres psql -U postgres -d brebcuentas < scripts/cuentas-base.sql   # 3. cuentas de prueba
+cd src/Breb.Cuentas && dotnet run --urls http://localhost:5080    # 4. API en :5080
+```
+
+Las veces siguientes basta con `docker compose up -d` y el paso 4. Cuando veas `Bus started: rabbitmq://localhost:5673/`, la API está lista: abre `http://localhost:5080/swagger` y pide un token en `POST /token` (usuarios en la sección [La API pide token](#-la-api-pide-token)). Para detenerla: `Ctrl+C` en la terminal de `dotnet run`, y `docker compose down` para apagar la infraestructura.
+
 **1. Levantar la infraestructura** (RabbitMQ + PostgreSQL):
 
 ```bash
@@ -202,6 +214,8 @@ Bus started: rabbitmq://localhost:5673/
 Swagger en `http://localhost:5080/swagger` · Panel de RabbitMQ en `http://localhost:15673` (`guest`/`guest`)
 
 > **Si usas Visual Studio (Ctrl+F5) o `dotnet run` a secas, la app queda en el 5051.** Todos los scripts aceptan el puerto: `.\demo-clase3.ps1 feliz -Puerto 5051`, `./demo-clase3.sh feliz 5051`, `python pruebas-autorizacion-clase9.py 5051`.
+
+> **Desde la app MAUI en el emulador Android:** usa el perfil `emulador` (escucha en `0.0.0.0:5080`, no solo en localhost): `dotnet run --launch-profile emulador`. La app apunta a `http://10.0.2.2:5080`.
 
 #### 🔑 La API pide token
 
