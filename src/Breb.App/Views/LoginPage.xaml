@@ -10,15 +10,8 @@
 
     <Grid>
 
-    <!-- Indicador de entrada: aparece cuando las credenciales ya fueron aceptadas y el formulario se oculta. -->
-    <VerticalStackLayout IsVisible="{Binding EntrandoASesion}" Spacing="16"
-                         VerticalOptions="Center" HorizontalOptions="Center">
-        <ActivityIndicator IsRunning="{Binding EntrandoASesion}" WidthRequest="48" HeightRequest="48"
-                           Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
-        <Label Text="Ingresando…" Style="{StaticResource TextoAuxiliar}" FontSize="16"
-               HorizontalTextAlignment="Center" SemanticProperties.Description="Ingresando a Bre-B" />
-    </VerticalStackLayout>
-
+    <!-- Una vez aceptadas las credenciales el formulario se oculta (no se vuelve a ver) y el único indicador
+         de carga es el de la pantalla de Saldo, que es la que aparece a continuación. -->
     <ScrollView IsVisible="{Binding MostrarFormulario}">
         <VerticalStackLayout Padding="24,56,24,32" Spacing="28" MaximumWidthRequest="480">
 
@@ -60,8 +53,6 @@
                     </Border>
 
                     <Button Text="Ingresar" Command="{Binding IngresarCommand}" AutomationId="BotonIngresar" />
-                    <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
-                                       Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
                 </VerticalStackLayout>
             </Border>
 

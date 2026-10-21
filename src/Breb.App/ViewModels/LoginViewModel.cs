@@ -37,7 +37,8 @@ public partial class LoginViewModel : ViewModelBase
 
     /// <summary>
     /// Credenciales ya aceptadas (o sesión vigente): se está entrando a la app. La vista oculta el
-    /// formulario y muestra un indicador de carga, para no enseñar de nuevo algo ya procesado.
+    /// formulario para no enseñar de nuevo algo ya procesado; el indicador de carga lo muestra la
+    /// pantalla de Saldo, que es la que aparece a continuación (un solo indicador).
     /// </summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(MostrarFormulario))]
@@ -110,7 +111,7 @@ public partial class LoginViewModel : ViewModelBase
 
         Clave = string.Empty;
 
-        // Credenciales aceptadas: desde aquí la vista muestra el indicador de carga en lugar del formulario.
+        // Credenciales aceptadas: desde aquí la vista oculta el formulario mientras se abre la pantalla de Saldo.
         EntrandoASesion = true;
         try
         {
