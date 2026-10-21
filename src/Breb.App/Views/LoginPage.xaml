@@ -8,7 +8,18 @@
     Shell.NavBarIsVisible="False"
     Title="Bre-B">
 
-    <ScrollView>
+    <Grid>
+
+    <!-- Indicador de entrada: aparece cuando las credenciales ya fueron aceptadas y el formulario se oculta. -->
+    <VerticalStackLayout IsVisible="{Binding EntrandoASesion}" Spacing="16"
+                         VerticalOptions="Center" HorizontalOptions="Center">
+        <ActivityIndicator IsRunning="{Binding EntrandoASesion}" WidthRequest="48" HeightRequest="48"
+                           Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+        <Label Text="Ingresando…" Style="{StaticResource TextoAuxiliar}" FontSize="16"
+               HorizontalTextAlignment="Center" SemanticProperties.Description="Ingresando a Bre-B" />
+    </VerticalStackLayout>
+
+    <ScrollView IsVisible="{Binding MostrarFormulario}">
         <VerticalStackLayout Padding="24,56,24,32" Spacing="28" MaximumWidthRequest="480">
 
             <VerticalStackLayout Spacing="6">
@@ -73,4 +84,6 @@
 
         </VerticalStackLayout>
     </ScrollView>
+
+    </Grid>
 </ContentPage>

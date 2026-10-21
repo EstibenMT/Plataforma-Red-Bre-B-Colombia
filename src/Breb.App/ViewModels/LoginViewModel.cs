@@ -35,6 +35,16 @@ public partial class LoginViewModel : ViewModelBase
 
     public string TextoConexion => MostrarConexion ? "Ocultar conexión" : "Configurar conexión";
 
+    /// <summary>
+    /// Credenciales ya aceptadas (o sesión vigente): se está entrando a la app. La vista oculta el
+    /// formulario y muestra un indicador de carga, para no enseñar de nuevo algo ya procesado.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(MostrarFormulario))]
+    private bool _entrandoASesion;
+
+    public bool MostrarFormulario => !EntrandoASesion;
+
     [RelayCommand]
     private void AlternarConexion() => MostrarConexion = !MostrarConexion;
 
@@ -45,12 +55,18 @@ public partial class LoginViewModel : ViewModelBase
         {
             if (await Auth.ObtenerSesionVigenteAsync() is not null)
             {
+                EntrandoASesion = true;
                 await Navegacion.IrASaldoAsync();
+            }
+            else
+            {
+                EntrandoASesion = false;
             }
         }
         catch (Exception)
         {
             // Si algo falla al leer la sesión, el usuario simplemente inicia sesión de nuevo.
+            EntrandoASesion = false;
         }
     }
 
@@ -93,6 +109,18 @@ public partial class LoginViewModel : ViewModelBase
         _configuracion.BaseUrl = baseUrl;
 
         Clave = string.Empty;
-        await Navegacion.IrASaldoAsync();
+
+        // Credenciales aceptadas: desde aquí la vista muestra el indicador de carga en lugar del formulario.
+        EntrandoASesion = true;
+        try
+        {
+            await Navegacion.IrASaldoAsync();
+        }
+        catch
+        {
+            // Si la navegación falla, se vuelve a mostrar el formulario (EjecutarAsync avisa del error).
+            EntrandoASesion = false;
+            throw;
+        }
     }
 }

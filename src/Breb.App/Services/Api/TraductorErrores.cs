@@ -7,8 +7,8 @@ namespace Breb.App.Services.Api;
 /// <summary>Datos que cambian el mensaje de un mismo código HTTP.</summary>
 public sealed record ContextoError(
     bool EsLogin = false,
-    string? Rol = null,
-    string MensajeNoEncontrado = "No encontramos la cuenta. Verifique el identificador.");
+    string MensajeNoEncontrado = "No encontramos la cuenta. Verifique el identificador.",
+    string MensajeSinPermiso = "No tiene permisos para realizar esta operación.");
 
 /// <summary>Convierte respuestas HTTP y excepciones en <see cref="ErrorApi"/> con mensajes en español.</summary>
 public static class TraductorErrores
@@ -59,10 +59,8 @@ public static class TraductorErrores
 
         return status switch
         {
-            HttpStatusCode.Forbidden => new ErrorApi(
-                TipoError.SinPermiso,
-                $"Su perfil (rol {contexto.Rol ?? "desconocido"}) no tiene permiso para realizar esta operación.",
-                traceId, codigo),
+            // El mensaje NO revela el rol del usuario: solo dice que no tiene permiso.
+            HttpStatusCode.Forbidden => new ErrorApi(TipoError.SinPermiso, contexto.MensajeSinPermiso, traceId, codigo),
             HttpStatusCode.NotFound => new ErrorApi(TipoError.NoEncontrado, contexto.MensajeNoEncontrado, traceId, codigo),
             HttpStatusCode.BadRequest => new ErrorApi(
                 TipoError.SolicitudInvalida,

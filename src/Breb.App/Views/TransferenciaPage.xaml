@@ -46,7 +46,21 @@
             <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
                                Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
 
-            <Border IsVisible="{Binding HayError}" Padding="14" StrokeThickness="0" StrokeShape="RoundRectangle 12"
+            <!-- Sin permiso (403): no es un fallo, es una restricción. Aviso amable, sin revelar el rol del usuario. -->
+            <Border IsVisible="{Binding HayErrorPermiso}" Padding="20" StrokeThickness="0" StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource AlertaSuave}, Dark={StaticResource AlertaSuaveDark}}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="🔒" FontSize="32" HorizontalOptions="Center" />
+                    <Label Text="Acceso restringido" FontFamily="OpenSansSemibold" FontSize="18"
+                           HorizontalTextAlignment="Center"
+                           TextColor="{AppThemeBinding Light={StaticResource Texto}, Dark={StaticResource TextoDark}}" />
+                    <Label Text="{Binding MensajeError}" FontSize="14" HorizontalTextAlignment="Center"
+                           TextColor="{AppThemeBinding Light={StaticResource TextoSuave}, Dark={StaticResource TextoSuaveDark}}"
+                           SemanticProperties.Description="Aviso de permisos" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border IsVisible="{Binding HayErrorGeneral}" Padding="14" StrokeThickness="0" StrokeShape="RoundRectangle 12"
                     BackgroundColor="{AppThemeBinding Light={StaticResource PeligroSuave}, Dark={StaticResource PeligroSuaveDark}}">
                 <Label Text="{Binding MensajeError}" FontSize="14"
                        TextColor="{AppThemeBinding Light={StaticResource Peligro}, Dark={StaticResource White}}" />

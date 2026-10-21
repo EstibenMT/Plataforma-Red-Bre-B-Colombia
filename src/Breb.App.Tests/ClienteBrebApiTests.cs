@@ -13,7 +13,7 @@ public class ClienteBrebApiTests
     private readonly FakeSesionStore _store = new() { Sesion = Datos.SesionOperador() };
 
     private ClienteBrebApi Crear(FakeHttpMessageHandler handler) =>
-        new(new HttpClient(handler), new FakeConfiguracion(), _red, _store);
+        new(new HttpClient(handler), new FakeConfiguracion(), _red);
 
     [Fact]
     public async Task Saldo_DeserializaCamelCase()
@@ -31,7 +31,7 @@ public class ClienteBrebApiTests
 
     [Theory]
     [InlineData(HttpStatusCode.Unauthorized, TipoError.SesionExpirada, "sesión venció")]
-    [InlineData(HttpStatusCode.Forbidden, TipoError.SinPermiso, "rol operador")]
+    [InlineData(HttpStatusCode.Forbidden, TipoError.SinPermiso, "No tiene permisos")]
     [InlineData(HttpStatusCode.NotFound, TipoError.NoEncontrado, "No encontramos la cuenta")]
     [InlineData(HttpStatusCode.Conflict, TipoError.SaldoInsuficiente, "Saldo insuficiente")]
     [InlineData(HttpStatusCode.InternalServerError, TipoError.ErrorServidor, "Referencia para soporte: abc123")]
@@ -58,6 +58,22 @@ public class ClienteBrebApiTests
         Assert.Equal("Bre-B tuvo un problema de nuestro lado. Intente de nuevo en unos minutos. Referencia para soporte: t1.", r.Error.Mensaje);
         Assert.DoesNotContain("saldo", r.Error.Mensaje);
         Assert.Equal("t1", r.Error.TraceId);
+    }
+
+    [Fact]
+    public async Task Retener_403_DiceQueNoTienePermisoSinRevelarElRol()
+    {
+        // La sesión de la prueba es de un operador: aun así el mensaje no debe nombrar ningún rol.
+        var handler = new FakeHttpMessageHandler(HttpStatusCode.Forbidden);
+
+        var r = await Crear(handler).RetenerAsync(new SolicitudTransferencia(Cuenta, 5m, Guid.NewGuid()));
+
+        Assert.False(r.EsExito);
+        Assert.Equal(TipoError.SinPermiso, r.Error!.Tipo);
+        Assert.Equal("No tiene permisos para realizar transferencias. Si necesita hacerlo, comuníquese con el administrador.", r.Error.Mensaje);
+        Assert.DoesNotContain("rol", r.Error.Mensaje, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("consulta", r.Error.Mensaje, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("operador", r.Error.Mensaje, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -179,7 +195,7 @@ public class ClienteBrebApiTests
         var clave = Guid.NewGuid();
         var interno = new FakeHttpMessageHandler(HttpStatusCode.OK, $$"""{"transferenciaId":"{{Guid.NewGuid()}}","montoUVB":1}""");
         var cadena = new IdempotenciaHandler { InnerHandler = interno };
-        var cliente = new ClienteBrebApi(new HttpClient(cadena), new FakeConfiguracion(), _red, _store);
+        var cliente = new ClienteBrebApi(new HttpClient(cadena), new FakeConfiguracion(), _red);
 
         await cliente.RetenerAsync(new SolicitudTransferencia(Cuenta, 1m, clave));
         await cliente.ObtenerSaldoAsync(Cuenta);

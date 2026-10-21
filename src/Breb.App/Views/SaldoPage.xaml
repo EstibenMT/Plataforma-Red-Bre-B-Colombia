@@ -16,12 +16,6 @@
                 <Label Text="{Binding Rol, StringFormat='Rol: {0}'}" Style="{StaticResource TextoAuxiliar}" />
             </VerticalStackLayout>
 
-            <Border IsVisible="{Binding HayAvisoRol}" Padding="14" StrokeThickness="0" StrokeShape="RoundRectangle 12"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource InfoSuave}, Dark={StaticResource InfoSuaveDark}}">
-                <Label Text="{Binding AvisoRol}" FontSize="14"
-                       TextColor="{AppThemeBinding Light={StaticResource Texto}, Dark={StaticResource TextoDark}}" />
-            </Border>
-
             <Border Style="{StaticResource Tarjeta}" Padding="24"
                     BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SuperficieDark}}">
                 <VerticalStackLayout Spacing="4">
@@ -51,7 +45,7 @@
                 </VerticalStackLayout>
             </Border>
 
-            <Button Text="Transferir" Command="{Binding IrATransferenciaCommand}" IsVisible="{Binding PuedeTransferir}" AutomationId="BotonTransferir" />
+            <Button Text="Transferir" Command="{Binding IrATransferenciaCommand}" AutomationId="BotonTransferir" />
             <Button Text="Actualizar saldo" Command="{Binding ConsultarSaldoCommand}" Style="{StaticResource BotonSecundario}" />
 
             <Border Style="{StaticResource Tarjeta}" Padding="16">

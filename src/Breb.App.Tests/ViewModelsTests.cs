@@ -146,6 +146,59 @@ public class LoginViewModelTests
 
         Assert.Empty(_nav.Destinos);
     }
+
+    [Fact]
+    public async Task LoginExitoso_OcultaElFormularioYMuestraElIndicador()
+    {
+        _auth.Respuesta = Resultado<Sesion>.Ok(Datos.SesionOperador());
+        var vm = Crear();
+        vm.Usuario = "ana.operadora";
+        vm.Clave = "secreta";
+        Assert.True(vm.MostrarFormulario);
+        Assert.False(vm.EntrandoASesion);
+
+        await vm.IngresarCommand.ExecuteAsync(null);
+
+        Assert.True(vm.EntrandoASesion);
+        Assert.False(vm.MostrarFormulario);
+    }
+
+    [Fact]
+    public async Task LoginFallido_SigueMostrandoElFormulario()
+    {
+        _auth.Respuesta = Resultado<Sesion>.Fallo(new ErrorApi(TipoError.CredencialesInvalidas, "mal"));
+        var vm = Crear();
+        vm.Usuario = "ana";
+        vm.Clave = "mal";
+
+        await vm.IngresarCommand.ExecuteAsync(null);
+
+        Assert.False(vm.EntrandoASesion);
+        Assert.True(vm.MostrarFormulario);
+    }
+
+    [Fact]
+    public async Task Inicializar_ConSesionVigenteMuestraElIndicadorEnLugarDelFormulario()
+    {
+        _auth.SesionVigente = Datos.SesionOperador();
+        var vm = Crear();
+
+        await vm.InicializarAsync();
+
+        Assert.True(vm.EntrandoASesion);
+        Assert.False(vm.MostrarFormulario);
+    }
+
+    [Fact]
+    public async Task Inicializar_SinSesionMuestraElFormulario()
+    {
+        var vm = Crear();
+
+        await vm.InicializarAsync();
+
+        Assert.False(vm.EntrandoASesion);
+        Assert.True(vm.MostrarFormulario);
+    }
 }
 
 public class SaldoViewModelTests
@@ -167,19 +220,22 @@ public class SaldoViewModelTests
 
         Assert.Equal(100m, vm.SaldoDisponible);
         Assert.Equal("ana.operadora", vm.Usuario);
-        Assert.False(vm.HayAvisoRol);
         Assert.False(vm.IsBusy);
     }
 
     [Fact]
-    public async Task RolConsulta_MuestraAviso()
+    public async Task RolConsulta_VeElBotonTransferirYPuedeAbrirLaPantalla()
     {
+        // El botón se ofrece a todos los roles: el rechazo lo da el servidor (403) al transferir.
         _auth.SesionVigente = Datos.SesionOperador() with { Rol = "consulta" };
         var vm = Crear();
 
         await vm.AlAparecerAsync();
+        await vm.IrATransferenciaCommand.ExecuteAsync(null);
 
-        Assert.True(vm.HayAvisoRol);
+        Assert.Equal("consulta", vm.Rol);
+        Assert.Contains("transferencia", _nav.Destinos);
+        Assert.False(vm.HayError);
     }
 
     [Fact]
@@ -444,6 +500,24 @@ public class TransferenciaViewModelTests
         Assert.Equal("sin permiso", vm.MensajeError);
         Assert.Equal(0, _auth.Cierres);
         Assert.False(vm.IsBusy);
+        // Se presenta como aviso de permisos (tarjeta amable), no como error genérico.
+        Assert.True(vm.EsErrorPermiso);
+        Assert.True(vm.HayErrorPermiso);
+        Assert.False(vm.HayErrorGeneral);
+    }
+
+    [Fact]
+    public async Task ErrorQueNoEsDePermiso_SeMuestraComoErrorGeneral()
+    {
+        _api.Retener = _ => Resultado<RespuestaRetencion>.Fallo(Datos.Error(TipoError.SaldoInsuficiente, "sin saldo"));
+        var vm = Crear();
+        vm.MontoTexto = "10";
+
+        await vm.TransferirCommand.ExecuteAsync(null);
+
+        Assert.False(vm.EsErrorPermiso);
+        Assert.False(vm.HayErrorPermiso);
+        Assert.True(vm.HayErrorGeneral);
     }
 
     [Fact]

@@ -49,7 +49,6 @@ public partial class SaldoViewModel : ViewModelBase
     private string _usuario = string.Empty;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HayAvisoRol), nameof(AvisoRol), nameof(PuedeTransferir))]
     private string _rol = string.Empty;
 
     public bool TieneSaldo => SaldoDisponible.HasValue;
@@ -62,12 +61,8 @@ public partial class SaldoViewModel : ViewModelBase
         ? $"Actualizado a las {t.ToLocalTime():HH:mm:ss}"
         : "Aún sin consultar";
 
-    /// <summary>Solo el rol operador retiene fondos; a los demás no se les ofrece el botón.</summary>
-    public bool PuedeTransferir => string.Equals(Rol, "operador", StringComparison.OrdinalIgnoreCase);
-
-    public bool HayAvisoRol => Rol.Length > 0 && !string.Equals(Rol, "operador", StringComparison.OrdinalIgnoreCase);
-
-    public string AvisoRol => $"Su rol ({Rol}) no permite transferir; solo el rol operador mueve fondos.";
+    // El botón Transferir se ofrece a todos los roles. Quien decide si se puede transferir es el servidor:
+    // con un rol sin permiso responde 403 y TraductorErrores lo convierte en el mensaje "no tiene permiso".
 
     /// <summary>Se llama cuando la pantalla aparece: valida la sesión y refresca el saldo.</summary>
     public Task AlAparecerAsync() => EjecutarAsync(async () =>

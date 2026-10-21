@@ -2,6 +2,8 @@
 
 Proyecto .NET MAUI creado en la **Clase 14 (Semana 11)**. Es el esqueleto de lo que se entrega en el **Evaluable 3** (#28) el 21 de octubre.
 
+> **¿Va a presentar el Evaluable 3?** Empiece por **[`GUIA-E3.md`](GUIA-E3.md)** (nota del docente, copiada de su `main`): los cuatro pasos en orden, con la comprobación de cada uno.
+
 ---
 
 El proyecto está en la solución `src/Breb.Platform.slnx`, junto a `Breb.Cuentas`.
@@ -87,6 +89,38 @@ Ya está resuelto en `Platforms/Android/MainApplication.cs`:
 ```
 
 **Solo en Debug**, a propósito: una entrega que acepte HTTP en claro en Release estaría exponiendo tokens y saldos en texto plano.
+
+---
+
+## ⚠️ La quinta trampa: el APK de Debug no se puede instalar a mano
+
+Esta es la que más duele, porque la app **compila sin un solo error** y aun así no abre.
+
+Quien tome el `.apk` de `bin/Debug/net10.0-android/` y lo instale con `adb install` —o lo pase a un teléfono y lo abra— ve que la aplicación se cierra de inmediato. En pantalla no hay información: solo "la aplicación se detuvo". En `adb logcat` sí está la razón:
+
+```
+F monodroid: No assemblies found in
+    '/data/user/0/com.companyname.breb.app/files/.__override__/x86_64'
+    or '<unavailable>'. Assuming this is part of Fast Deployment. Exiting...
+F monodroid: Abort at monodroid-glue.cc:757
+F libc    : Fatal signal 6 (SIGABRT)
+```
+
+**Por qué.** En Debug, .NET para Android usa *Fast Deployment*: para que el ciclo de compilar-y-probar sea corto, los ensamblados .NET **no se empaquetan dentro del APK**. Los copia aparte el propio `dotnet build -t:Run`, a una carpeta privada de la aplicación. El APK que queda en `bin/` está incompleto a propósito, y por sí solo no arranca.
+
+**Las dos salidas:**
+
+```bash
+# A) Desplegar con la herramienta, que además empuja los ensamblados
+dotnet build -f net10.0-android -t:Run
+
+# B) Generar un APK que se baste a sí mismo (para repartir o instalar a mano)
+dotnet build -f net10.0-android -c Debug -p:EmbedAssembliesIntoApk=true
+```
+
+Para el **Evaluable 3**, si el squad entrega un `.apk`, tiene que ser uno de los de la opción B —o un build de `Release`, que ya embebe los ensamblados—. Un APK de Debug suelto se ve bien, pesa lo mismo, y no abre en la máquina de nadie más.
+
+> Un síntoma que despista: cuando la app aborta así en bucle, Android muestra **"Process system isn't responding"**. Parece que el emulador está lento o dañado; lo que pasa es que el sistema está reiniciando el proceso una y otra vez. El diálogo no habla de la app, pero la causa es la app.
 
 ---
 

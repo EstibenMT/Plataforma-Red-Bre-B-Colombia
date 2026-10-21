@@ -10,14 +10,12 @@ public sealed class ClienteBrebApi : IBrebApi
     private readonly HttpClient _http;
     private readonly IConfiguracionApi _configuracion;
     private readonly IEstadoRed _red;
-    private readonly ISesionStore _store;
 
-    public ClienteBrebApi(HttpClient http, IConfiguracionApi configuracion, IEstadoRed red, ISesionStore store)
+    public ClienteBrebApi(HttpClient http, IConfiguracionApi configuracion, IEstadoRed red)
     {
         _http = http;
         _configuracion = configuracion;
         _red = red;
-        _store = store;
     }
 
     public Task<Resultado<SaldoCuenta>> ObtenerSaldoAsync(Guid cuentaId, CancellationToken ct = default) =>
@@ -31,7 +29,7 @@ public sealed class ClienteBrebApi : IBrebApi
         var monto = solicitud.MontoUVB.ToString(CultureInfo.InvariantCulture);
         return EjecutarAsync<RespuestaRetencion>(
             HttpMethod.Post, $"/cuentas/{solicitud.CuentaId}/retener?montoUVB={monto}", solicitud.ClaveIdempotencia,
-            new ContextoError(), ct);
+            new ContextoError(MensajeSinPermiso: "No tiene permisos para realizar transferencias. Si necesita hacerlo, comuníquese con el administrador."), ct);
     }
 
     public Task<Resultado<ConsultaTransferencia>> ConsultarEstadoAsync(Guid transferenciaId, CancellationToken ct = default) =>
@@ -57,26 +55,7 @@ public sealed class ClienteBrebApi : IBrebApi
 
         return await EjecutorHttp.EnviarAsync<T>(
             _http, _red, baseUrl, peticion,
-            async r =>
-            {
-                // El rol solo se lee del almacén para explicar un 403; no se conserva.
-                var ctx = r.StatusCode == System.Net.HttpStatusCode.Forbidden
-                    ? contexto with { Rol = await LeerRolAsync().ConfigureAwait(false) }
-                    : contexto;
-                return await TraductorErrores.DesdeRespuestaAsync(r, ctx, ct).ConfigureAwait(false);
-            },
+            r => TraductorErrores.DesdeRespuestaAsync(r, contexto, ct),
             ct).ConfigureAwait(false);
-    }
-
-    private async Task<string?> LeerRolAsync()
-    {
-        try
-        {
-            return (await _store.LeerAsync().ConfigureAwait(false))?.Rol;
-        }
-        catch (Exception)
-        {
-            return null;
-        }
     }
 }

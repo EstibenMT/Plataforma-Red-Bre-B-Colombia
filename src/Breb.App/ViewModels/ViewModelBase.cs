@@ -29,8 +29,17 @@ public abstract partial class ViewModelBase : ObservableObject
     private bool _isBusy;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HayError))]
+    [NotifyPropertyChangedFor(nameof(HayError), nameof(HayErrorGeneral), nameof(HayErrorPermiso))]
     private string? _mensajeError;
+
+    /// <summary>El error actual es "sin permiso" (403): la vista lo muestra como aviso amable, no como fallo.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HayErrorGeneral), nameof(HayErrorPermiso))]
+    private bool _esErrorPermiso;
+
+    public bool HayErrorPermiso => HayError && EsErrorPermiso;
+
+    public bool HayErrorGeneral => HayError && !EsErrorPermiso;
 
     public bool NoOcupado => !IsBusy;
 
@@ -50,6 +59,7 @@ public abstract partial class ViewModelBase : ObservableObject
             return;
         }
 
+        EsErrorPermiso = error.Tipo == TipoError.SinPermiso;
         MensajeError = error.Mensaje;
     }
 
@@ -57,6 +67,7 @@ public abstract partial class ViewModelBase : ObservableObject
     protected async Task EjecutarAsync(Func<Task> accion)
     {
         IsBusy = true;
+        EsErrorPermiso = false;
         MensajeError = null;
         try
         {

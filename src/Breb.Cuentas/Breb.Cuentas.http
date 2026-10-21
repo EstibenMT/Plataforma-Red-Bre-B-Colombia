@@ -1,7 +1,12 @@
 # Peticiones de la API Bre-B para Visual Studio / VS Code (REST Client).
-# Puerto 5051 = Visual Studio con Ctrl+F5. Con "dotnet run --urls" use 5080.
-@api = http://localhost:5051
+# Puerto 5080 = perfil "emulador" (el que usa la demo con la app en el emulador).
+# Con el perfil "http" (Ctrl+F5 clasico) el puerto es 5051: cambie @api.
+@api = http://localhost:5080
 @cuenta = 11111111-1111-1111-1111-111111111111
+
+# DEMO: pegue aqui el identificador de la transferencia que muestra la app
+# (el core bancario lo confirma con la peticion "6B"; hay que hacerlo en menos de 15 s).
+@transferenciaId = PEGUE-AQUI-EL-ID-DE-LA-APP
 
 ### 1. Token de OPERADOR (usuarios de laboratorio, documentados: no son secretos)
 # @name operador
@@ -35,6 +40,12 @@ Authorization: Bearer {{consulta.response.body.token}}
 
 ### 6. Confirmar el abono como banco -> 202
 POST {{api}}/transferencias/{{retencion.response.body.transferenciaId}}/confirmar-abono
+Authorization: Bearer {{banco.response.body.token}}
+
+### 6B. CORE BANCARIO en la demo: confirmar el abono de la transferencia hecha DESDE LA APP -> 202
+# Antes: (1) "Send request" en la peticion 3 (token del banco) y (2) pegar el id arriba en @transferenciaId.
+# Un 403 aqui es lo correcto si se usa el token del operador: solo el rol "banco" confirma.
+POST {{api}}/transferencias/{{transferenciaId}}/confirmar-abono
 Authorization: Bearer {{banco.response.body.token}}
 
 ### 7. Leer saldo como consulta -> 200
