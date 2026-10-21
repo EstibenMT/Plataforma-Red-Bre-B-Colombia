@@ -49,7 +49,7 @@ public sealed class AuthService : IAuthService
         {
             return Resultado<Sesion>.Fallo(TraductorErrores.RespuestaInvalida());
         }
-
+        //Aqui se guarda la secion en scurity storage
         var sesion = new Sesion(token.Token, token.Expira, token.Rol, usuario);
         try
         {
