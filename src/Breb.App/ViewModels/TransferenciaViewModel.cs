@@ -262,6 +262,10 @@ public partial class TransferenciaViewModel : ViewModelBase
             MensajeResultado = "Retuvimos el monto en su cuenta mientras el banco destino confirma. Esto toma 15 segundos como máximo.";
             Fase = FaseTransferencia.EnProceso;
 
+            // La retención ya está aplicada en el servidor: se muestra de inmediato (el disponible baja y el
+            // retenido sube) en lugar de esperar al final con los valores de antes.
+            await RecargarSaldoAsync();
+
             if (!ct.IsCancellationRequested)
             {
                 await SondearAsync(envio.Valor.TransferenciaId, ct);
@@ -329,7 +333,7 @@ public partial class TransferenciaViewModel : ViewModelBase
                     case EstadoTransferencia.Compensada:
                         await FinalizarAsync(
                             FaseTransferencia.Compensada,
-                            "El banco destino no confirmó a tiempo. Los fondos fueron reintegrados a su cuenta y no se descontó ningún monto.");
+                            "La transferencia no se realizó: el banco destino no confirmó a tiempo. Los fondos fueron reintegrados a su cuenta y no se descontó ningún monto.");
                         return;
                     case EstadoTransferencia.Compensando:
                         MensajeResultado = "El banco destino no confirmó a tiempo. Estamos reintegrando los fondos a su cuenta…";

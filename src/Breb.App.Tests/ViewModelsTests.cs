@@ -419,6 +419,32 @@ public class TransferenciaViewModelTests
 
         Assert.Equal(FaseTransferencia.Compensada, vm.Fase);
         Assert.Contains("reintegrados", vm.MensajeResultado);
+        Assert.Contains("no se realizó", vm.MensajeResultado);
+    }
+
+    [Fact]
+    public async Task TrasEnviar_RecargaElSaldoAntesDeEmpezarAPreguntarPorElEstado()
+    {
+        // La retención ya está en el servidor al responder el POST: la tarjeta debe mostrarla enseguida
+        // (disponible baja, retenido sube), no esperar al final del seguimiento.
+        var consultasDeEstadoAlLeerSaldo = new List<int>();
+        _api.Saldo = id =>
+        {
+            consultasDeEstadoAlLeerSaldo.Add(_api.ConsultasEstado);
+            var retenido = _api.Solicitudes.Count > 0 ? 10m : 0m;
+            return Resultado<SaldoCuenta>.Ok(new SaldoCuenta(id, 100m - retenido, retenido));
+        };
+        _api.Estados.Enqueue(Datos.Estado(EstadoTransferencia.EnProceso));
+        _api.Estados.Enqueue(Datos.Estado(EstadoTransferencia.Compensada));
+        var vm = Crear();
+        vm.MontoTexto = "10";
+
+        await vm.TransferirCommand.ExecuteAsync(null);
+
+        Assert.Equal(0, consultasDeEstadoAlLeerSaldo[0]);   // primera lectura: antes de la primera consulta de estado
+        Assert.True(consultasDeEstadoAlLeerSaldo.Count >= 2);   // y otra al terminar (compensada)
+        Assert.Equal(90m, vm.SaldoDisponible);
+        Assert.Equal(10m, vm.SaldoRetenido);
     }
 
     [Fact]
