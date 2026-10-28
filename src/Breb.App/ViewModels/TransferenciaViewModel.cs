@@ -4,6 +4,7 @@ using Breb.App.Models;
 using Breb.App.Services.Abstracciones;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Breb.App.Servicios;
 
 namespace Breb.App.ViewModels;
 
@@ -213,7 +214,7 @@ public partial class TransferenciaViewModel : ViewModelBase
         }
 
         if (monto <= 0)
-        {
+    {
             MensajeError = "El monto debe ser mayor que cero.";
             return;
         }
@@ -350,15 +351,15 @@ public partial class TransferenciaViewModel : ViewModelBase
             {
                 await ManejarErrorAsync(consulta.Error);
                 return;
-            }
+        }
             else
-            {
+        {
                 // Fallo transitorio de red: se avisa y se sigue intentando hasta agotar el plazo.
                 MensajeError = consulta.Error.Mensaje;
-            }
+        }
 
             if (reloj.Elapsed >= DuracionMaximaSondeo)
-            {
+        {
                 Indeterminar();
                 await RecargarSaldoAsync();
                 return;
@@ -366,20 +367,20 @@ public partial class TransferenciaViewModel : ViewModelBase
 
             await Task.Delay(IntervaloSondeo, ct);
         }
-    }
+        }
 
     private async Task FinalizarAsync(FaseTransferencia fase, string mensaje)
-    {
+        {
         MensajeResultado = mensaje;
         Fase = fase;
         await RecargarSaldoAsync();
-    }
+        }
 
     private void Indeterminar()
-    {
+        {
         MensajeResultado = "No pudimos confirmar el resultado de la transferencia. Revise su saldo antes de intentar de nuevo.";
         Fase = FaseTransferencia.Indeterminada;
-    }
+        }
 
     private async Task SeguirSinSeguimientoAsync(CancellationToken ct)
     {
@@ -393,9 +394,9 @@ public partial class TransferenciaViewModel : ViewModelBase
     private async Task RecargarSaldoAsync()
     {
         if (!Guid.TryParse(CuentaIdTexto, out var cuentaId))
-        {
+    {
             return;
-        }
+    }
 
         var saldo = await _api.ObtenerSaldoAsync(cuentaId);
         if (saldo.EsExito)
@@ -404,7 +405,7 @@ public partial class TransferenciaViewModel : ViewModelBase
             SaldoRetenido = saldo.Valor.SaldoRetenido;
         }
         else
-        {
+    {
             await ManejarErrorAsync(saldo.Error);
         }
     }

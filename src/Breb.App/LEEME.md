@@ -1,12 +1,33 @@
 # Breb.App — la aplicación móvil de la Red Bre-B
 
-Proyecto .NET MAUI creado en la **Clase 14 (Semana 11)**. Es el esqueleto de lo que se entrega en el **Evaluable 3** (#28) el 21 de octubre.
+Proyecto .NET MAUI creado en la **Clase 14 (Semana 11)** y dotado de arquitectura en la **Clase 15**. Es la referencia de lo que se entrega en el **Evaluable 3** (#28) el 21 de octubre.
+
+Hoy la app hace una cosa completa: pide un token a `/token` con usuario y clave, consulta `/cuentas/{id}/saldo` con ese token en el encabezado `Bearer`, y muestra el saldo en pantalla. Nadie escribe `saldoLabel.Text = ...` en ninguna parte: eso lo hace el binding.
+
+| Pieza | Archivo | Responsabilidad |
+|---|---|---|
+| Vista | `MainPage.xaml` | Solo describe qué se ve y a qué se enlaza |
+| ViewModel | `ViewModels/SaldoViewModel.cs` | Propiedades observables, comandos y manejo de error |
+| Servicio | `Servicios/ClienteBrebApi.cs` | Único lugar que conoce rutas, JSON y el token |
+| Contratos | `Modelos/Contratos.cs` | Los DTOs de la API, copiados a mano |
+| Composición | `MauiProgram.cs` | Registra el `HttpClient` y resuelve las dependencias |
+
+Dos paquetes que **no** vienen con la plantilla y hacen falta:
+
+```bash
+dotnet add package CommunityToolkit.Mvvm
+dotnet add package Microsoft.Extensions.Http
+```
+
+`AddHttpClient` llega gratis en una API ASP.NET Core, pero **no** en MAUI. Sin `Microsoft.Extensions.Http` el build falla con `CS1061: IServiceCollection does not contain a definition for 'AddHttpClient'`, y falla al final, después de restaurar y de compilar los recursos de Android.
 
 > **¿Va a presentar el Evaluable 3?** Empiece por **[`GUIA-E3.md`](GUIA-E3.md)** (nota del docente, copiada de su `main`): los cuatro pasos en orden, con la comprobación de cada uno.
 
 ---
 
 El proyecto está en la solución `src/Breb.Platform.slnx`, junto a `Breb.Cuentas`.
+
+> **¿Va a presentar el Evaluable 3?** Empiece por **[`GUIA-E3.md`](GUIA-E3.md)**: los cuatro pasos en orden, con la comprobación de cada uno y qué hacer cuando falla. Este LEEME es la referencia de fondo; la guía es para seguirla en la máquina.
 
 ---
 

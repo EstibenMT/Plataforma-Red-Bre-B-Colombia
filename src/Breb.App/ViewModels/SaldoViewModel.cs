@@ -2,6 +2,7 @@ using Breb.App.Models;
 using Breb.App.Services.Abstracciones;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Breb.App.Servicios;
 
 namespace Breb.App.ViewModels;
 
@@ -114,12 +115,12 @@ public partial class SaldoViewModel : ViewModelBase
         if (!resultado.EsExito)
         {
             if (resultado.Error.Tipo == TipoError.NoEncontrado)
-            {
+        {
                 // No dejar a la vista los saldos de otra cuenta.
                 SaldoDisponible = null;
                 SaldoRetenido = null;
                 UltimaActualizacion = null;
-            }
+        }
 
             await ManejarErrorAsync(resultado.Error);
             return;

@@ -215,8 +215,33 @@ app.MapPost("/token", (SolicitudToken solicitud, DirectorioUsuarios directorio, 
     });
 });
 
+// ── Idempotencia desde el cliente (Semana 14) ───────────────────────────────
+// transferenciaId es OPCIONAL y lo pone QUIEN LLAMA. Ese detalle es el tema
+// completo de la Semana 14, y conviene entender por qué.
+//
+// Hasta aquí el identificador lo inventaba el servidor con Guid.NewGuid().
+// Funciona mientras la red se porte bien. Pero el caso real es este:
+//
+//   1. La app pide retener 100 UVB.
+//   2. El servidor retiene y responde.
+//   3. La respuesta SE PIERDE — el bus se metió a un túnel.
+//   4. La app no sabe si pasó o no, y reintenta.
+//   5. El servidor inventa OTRO id y retiene otros 100 UVB.
+//
+// El usuario tocó el botón una vez y la cuenta quedó con 200 UVB retenidos.
+// Y lo peor: la app no hizo nada mal. Reintentar ante un timeout es lo
+// correcto; sin reintento, una transferencia buena se pierde por un bache
+// de red. El error está en que el cliente no tenía forma de decir
+// "esta es la MISMA operación que ya te pedí".
+//
+// La identidad correcta ya estaba modelada desde la Semana 6: la clave
+// primaria de Retencion ES el TransferenciaId, así que la base de datos ya
+// garantizaba "una transferencia retiene exactamente una vez". Lo que
+// faltaba era dejar que esa identidad naciera en el cliente, donde nace la
+// intención. Una llave que el servidor inventa no distingue dos intentos
+// de lo mismo, porque para él son dos peticiones distintas.
 app.MapPost("/cuentas/{cuentaId:guid}/retener",
-    async (Guid cuentaId, decimal montoUVB,
+    async (Guid cuentaId, decimal montoUVB, Guid? transferenciaId,
            CuentasDbContext db, IPublishEndpoint publishEndpoint) =>
     {
         // Un monto inválido es culpa del cliente: 400, no el 500 que producía
@@ -270,26 +295,43 @@ app.MapPost("/cuentas/{cuentaId:guid}/retener",
 
         if (cuenta is null) return Results.NotFound("Cuenta no existe.");
 
-        // Saldo insuficiente: 409, decidido BAJO el bloqueo FOR UPDATE (el saldo
-        // que se lee es el definitivo). Se sale sin commit: la transacción se
-        // revierte al descartarla y el bloqueo se suelta. Cuenta.Retener conserva
-        // el mismo invariante como segunda barrera.
-        if (montoUVB > cuenta.SaldoDisponible)
-            return Results.Problem(title: "Saldo insuficiente para retener.",
-                                   detail: "Saldo insuficiente para retener.",
-                                   statusCode: StatusCodes.Status409Conflict);
+        // Si el cliente no manda llave, se comporta como antes. Así los
+        // llamadores viejos siguen funcionando — pero sin protección.
+        var idTransferencia = transferenciaId ?? Guid.NewGuid();
+        Telemetria.EtiquetarTransferencia(idTransferencia);
 
-        var transferenciaId = Guid.NewGuid();
-        Telemetria.EtiquetarTransferencia(transferenciaId);
+        // ── La comprobación que hace idempotente a este endpoint ────────────
+        // Va DESPUÉS del FOR UPDATE a propósito. Dos reintentos simultáneos
+        // sobre la misma cuenta hacen fila por el bloqueo, así que el segundo
+        // ve lo que el primero ya escribió. Si esta consulta se hiciera antes
+        // de tomar el bloqueo, ambos verían "no existe" y ambos intentarían
+        // insertar: uno chocaría contra la clave primaria y respondería 500.
+        //
+        // Responder 200 con el resultado original — y no un 409 — es
+        // deliberado: para el cliente, el reintento TUVO éxito. Eso es lo que
+        // le permite dejar de reintentar y borrar la operación de su cola.
+        var yaRetenida = await db.Retenciones
+            .FirstOrDefaultAsync(r => r.TransferenciaId == idTransferencia);
+
+        if (yaRetenida is not null)
+        {
+            Log.Information("Retención repetida ignorada: {TransferenciaId}", idTransferencia);
+            return Results.Ok(new
+            {
+                transferenciaId = idTransferencia,
+                montoUVB = yaRetenida.MontoUVB,   // el monto ORIGINAL, no el que acaba de llegar
+                repetida = true
+            });
+        }
 
         // Semana 6: Retener ahora devuelve la RETENCIÓN, no solo muta un número.
         // Queda una fila que dice exactamente quién retuvo cuánto y cuándo.
-        var retencion = cuenta.Retener(transferenciaId, montoUVB);
+        var retencion = cuenta.Retener(idTransferencia, montoUVB);
         db.Retenciones.Add(retencion);
 
         await publishEndpoint.Publish(new FondosRetenidos
         {
-            TransferenciaId = transferenciaId,
+            TransferenciaId = idTransferencia,
             CuentaOrigenId = cuentaId,                 // la saga lo usa para compensar
             MontoUVB = montoUVB,
             TimeoutMs = 15000
@@ -299,9 +341,9 @@ app.MapPost("/cuentas/{cuentaId:guid}/retener",
         await tx.CommitAsync();                        // 4. y aquí suelta el bloqueo
 
         Log.Information("Fondos retenidos: {TransferenciaId} por {Monto} UVB",
-                        transferenciaId, montoUVB);
+                        idTransferencia, montoUVB);
 
-        return Results.Ok(new { transferenciaId, montoUVB });
+        return Results.Ok(new { transferenciaId = idTransferencia, montoUVB, repetida = false });
     })
     // Semana 8, primera sesión: .RequireAuthorization() — CUALQUIER token válido.
     // Un usuario de consulta retenía fondos. Ahora hace falta el rol operador;

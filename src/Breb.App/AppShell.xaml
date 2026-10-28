@@ -17,4 +17,10 @@
         ContentTemplate="{DataTemplate views:SaldoPage}"
         Route="saldo" />
 
+        <ShellContent
+            Title="Transferir"
+            ContentTemplate="{DataTemplate local:TransferenciaPage}"
+            Route="TransferenciaPage" />
+    </TabBar>
+
 </Shell>
